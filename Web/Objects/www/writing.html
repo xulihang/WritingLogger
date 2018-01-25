@@ -13,10 +13,10 @@
 	<div>
         <form>
         Input your user name: <input id="username" type="text"></input>
-        <button type="submit" id="enter">登录</button>
+        <button type="submit" id="enter">Enter</button>
         </form>
      </div>
-      <button id="logout">退出</button>
+      <button id="logout">Logout</button>
       <button id="download">下载记录</button>
      <div id="text_div">
          <textarea id="textarea" oninput="OnInput(event)"></textarea>
@@ -36,9 +36,9 @@
             $('#length').text("词数："+event.target.value.split(" ").length);
             b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {text: event.target.value,position:textarea.selectionStart}}));
         }
-    function show_confirm()
+    function show_confirm(text)
     {
-    var r=confirm("检测到此前保存的记录，是否使用？");
+    var r=confirm(text);
     if (r==true)
       {
       return true;

@@ -46,7 +46,7 @@ Sub Enter_Click (Params As Map)
 		Log(File.Exists(File.DirApp,"www/tmp/"&name&".txt"))
 		If File.Exists(File.DirApp,"www/tmp/"&name&".txt") Then
 			Dim confirm As Future
-			confirm=ws.RunFunctionWithResult("show_confirm",Null)
+			confirm=ws.RunFunctionWithResult("show_confirm",Array as Object("检测到此前保存的记录，是否使用？"))
 			Dim result As String=confirm.Value
 			If result="true" Then
 				loadRecord(name)
