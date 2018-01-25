@@ -1,0 +1,35 @@
+﻿Version=5.9
+AppType=StandardJava
+NumberOfModules=2
+Module1=Writing
+Module2=UsersShared
+Build1=Default,b4j.example
+NumberOfFiles=0
+NumberOfLibraries=3
+Library1=jcore
+Library2=jserver
+Library3=json
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Public srvr As Server
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 51042
+	srvr.AddWebSocket("/main", "Writing")
+	UsersShared.Init
+	srvr.Start
+	StartMessageLoop
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

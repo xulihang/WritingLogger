@@ -1,0 +1,230 @@
+﻿Version=5.9
+AppType=JavaFX
+NumberOfModules=2
+Module1=login
+Module2=WebSocketHandler
+Build1=Default,b4j.example
+NumberOfFiles=2
+File1=login.bjl
+File2=main.bjl
+NumberOfLibraries=5
+Library1=jcore
+Library2=jfx
+Library3=apachestringutilsb4j
+Library4=json
+Library5=jwebsocketclient
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Button1 As Button
+	Private ListView1 As ListView
+	Private TextArea1 As TextArea
+	Private previousTimestamp As Long
+	Private Button2 As Button
+	Private isReplay As Boolean
+	Private Button3 As Button
+	Public wsh As WebSocketHandler
+	Public username="" As String
+	Public serverLink="ws://127.0.0.1:51042/main" As String
+	Private Button4 As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	login.Show
+	connectWSServer
+End Sub
+
+Sub init
+	Button1.Text="Record"
+	TextArea1.Enabled=False
+	Button2.Enabled=False
+	Button4.Enabled=False
+End Sub
+
+Sub connectWSServer
+	If wsh.IsInitialized=False Then
+		wsh.Initialize(Me,"wsh")
+	End If
+	wsh.Connect(serverLink)
+End Sub
+
+Sub wsh_loggedin(Params As List)'登录成功
+	login.LoginForm.Close
+	MainForm.Show
+	init
+End Sub
+
+Sub wsh_duplicate(Params As List)
+	fx.Msgbox(MainForm,"有重名了","")
+	'wsh.Connect(serverLink&"main")
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub TextArea1_TextChanged (Old As String, New As String)
+	'If New.Length-Old.Length>1 And New.Contains("'") Then
+	'	TextArea1.Text=Old
+	'	fx.Msgbox(MainForm,"Do not use pinyin ime","")
+	'	Return
+	'End If
+	'If Old.Length-New.Length>1 And Old.Contains("'") Then
+	'	Return
+	'End If
+	If isReplay=True Then
+		Return
+	End If
+	If TextArea1.Enabled=True Then
+		Dim map1 As Map
+		map1.Initialize
+		If New.Length>Old.Length Then
+			map1.Put("word",New.SubString2(TextArea1.SelectionStart-New.Length+Old.Length,TextArea1.SelectionStart))
+			map1.Put("type","new")
+			map1.Put("pos",TextArea1.SelectionStart)
+			Dim time As Long
+			time=DateTime.Now
+			map1.Put("timestamp",time)
+			map1.Put("duration",time-previousTimestamp)
+			ListView1.Items.Add(map1)
+			wsh.SendEventToServer("upload_Text",map1)
+			previousTimestamp=time
+			Log(map1)
+		Else if New.Length<Old.Length Then
+			Log(TextArea1.SelectionStart)
+			Log(Old.Length)
+			Log(New.Length)
+			map1.Put("word",Old.SubString2(TextArea1.SelectionStart,TextArea1.SelectionStart+Old.Length-New.Length))
+			map1.Put("type","revision")
+			map1.Put("pos",TextArea1.SelectionStart)
+			Dim time As Long
+			time=DateTime.Now
+			map1.Put("timestamp",time)
+			map1.Put("duration",time-previousTimestamp)
+			ListView1.Items.Add(map1)
+			wsh.SendEventToServer("upload_Text",map1)
+			previousTimestamp=time
+			Log(map1)
+		End If
+	End If
+End Sub
+
+Sub Button1_MouseClicked (EventData As MouseEvent)
+	If Button1.Text="Record" Then
+		Button1.Text="Stop Recording"
+		previousTimestamp=DateTime.Now
+		TextArea1.Enabled=True
+		Button2.Enabled=False
+		Button4.Enabled=False
+	Else if Button1.Text="Stop Recording" Then
+		Button1.Text="Record"
+		TextArea1.Enabled=False
+		Button2.Enabled=True
+		Button4.Enabled=True
+	End If
+End Sub
+
+Sub TextArea1_MouseClicked (EventData As MouseEvent)
+	Log(TextArea1.SelectionStart)
+	Log("clicked")
+End Sub
+
+Sub TextArea1_FocusChanged (HasFocus As Boolean)
+	Log("focus changed")
+End Sub
+
+Sub Button2_MouseClicked (EventData As MouseEvent)
+	If isReplay=False Then
+		isReplay=True
+		Button2.Enabled=False
+		replay
+	End If
+End Sub
+
+Sub replay
+	TextArea1.Text=""
+	TextArea1.Enabled=True
+	For Each item As Map In ListView1.Items
+		Dim word As String
+		Dim before,after As String
+		word=item.Get("word")
+		Dim pos As Int
+		pos=item.Get("pos")
+		If item.Get("type")="new" Then
+			Sleep(item.Get("duration"))
+			pos=pos-word.Length
+			before=TextArea1.Text.SubString2(0,pos)
+			after=TextArea1.Text.SubString2(pos,TextArea1.Text.Length)
+			TextArea1.Text=before&item.Get("word")&after
+			TextArea1.SetSelection(pos+word.Length,pos+word.Length)
+
+		Else
+			Sleep(item.Get("duration"))
+			pos=pos+word.Length
+			before=TextArea1.Text.SubString2(0,pos)
+			after=TextArea1.Text.SubString2(pos,TextArea1.Text.Length)
+			TextArea1.Text=before.SubString2(0,before.Length-word.Length)&after
+
+			TextArea1.SetSelection(pos-word.Length,pos-word.Length)
+		End If
+	Next
+	TextArea1.Enabled=False
+	isReplay=False
+	Button2.Enabled=True
+End Sub
+
+Sub Button3_MouseClicked (EventData As MouseEvent)
+	Dim json As JSONGenerator
+	json.Initialize2(ListView1.Items)
+	File.WriteString(File.DirApp,"out.json",json.ToPrettyString(4))
+	Dim csv As String
+	For Each item As Map In ListView1.Items
+		For Each key As String In item.Keys
+			csv=csv&"	"&key
+		Next
+		csv=csv&CRLF
+		Exit'添加表头
+	Next
+	For Each item As Map In ListView1.Items
+		For Each key As String In item.Keys
+			csv=csv&"	"&item.Get(key)
+		Next
+		csv=csv&CRLF
+	Next
+	File.WriteString(File.DirApp,"out.csv",csv)
+End Sub
+
+Public Sub wsh_NewMessage(Messages As List)
+	For Each msg As String In Messages
+		Log(msg)
+	Next
+End Sub
+
+Sub wsh_Connected
+	Log("WebSocket Connected")
+	fx.Msgbox(MainForm,"服务器已连接，可以开始记录","")
+End Sub
+
+Sub wsh_Closed (Reason As String)
+	Log("WebSocket Closed: " & Reason)
+	fx.Msgbox(MainForm,"当前连接已断开，请重新运行程序","")
+End Sub
+
+
+Sub Button4_MouseClicked (EventData As MouseEvent)
+	wsh.SendEventToServer("stop_Recording",CreateMap("end":"end"))
+End Sub
+
+Sub wsh_Saved(Params As List)
+	fx.Msgbox(MainForm,"记录已保存","")
+	wsh.Close
+End Sub

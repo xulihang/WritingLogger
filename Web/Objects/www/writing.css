@@ -1,0 +1,42 @@
+h1 {
+    font: bold 25px "calibri","arial";
+	left: 300px;
+    position: relative;
+    text-align: left;
+}
+
+textarea {
+    width:95%;
+    height:400px;
+    padding: 3px 0px 3px 3px;
+    margin: 5px 1px 3px 0px;
+}
+
+textarea:focus {
+    box-shadow: 0 0 5px rgba(255,255,255,1);
+    padding: 3px 0px 3px 3px;
+    margin: 5px 1px 3px 0px;
+}
+
+#text_div {
+    width:81%;
+    position: absolute;
+}
+
+#word-count {
+    left:82%;
+    top:10%;
+    position:absolute;
+}
+#userlist {
+    left:82%;
+    width:13%;
+    border-style: solid;
+    border-width: 1px;
+    height:400px;
+    position: absolute;
+}
+
+span{
+    display:block;
+}

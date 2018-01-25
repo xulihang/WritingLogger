@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"> 
+    <title>WritingLogger</title>
+  
+    <script src="/jquery-1.7.1.min.js"></script>
+     <link rel="stylesheet" type="text/css" href="writing.css" />
+    <script src="/b4j_ws.js"></script>
+ </head>
+ <body>
+	<h1>Login</h1>
+	<div>
+        <form>
+        Input your user name: <input id="username" type="text"></input>
+        <button type="submit" id="enter">登录</button>
+        </form>
+     </div>
+      <button id="logout">退出</button>
+      <button id="download">下载记录</button>
+     <div id="text_div">
+         <textarea id="textarea" oninput="OnInput(event)"></textarea>
+        <br/>
+     </div>
+     <div id="userlist">
+     <p>已登录用户：</p>
+     </div>
+     <div id="word-count"><p id="length">词数：</p></div>
+	<script>
+    var ev;
+	$( document ).ready(function() {
+        b4j_connect("/main");
+    });
+    function OnInput (event) {
+            ev=event;
+            $('#length').text("词数："+event.target.value.split(" ").length);
+            b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {text: event.target.value,position:textarea.selectionStart}}));
+        }
+    function show_confirm()
+    {
+    var r=confirm("检测到此前保存的记录，是否使用？");
+    if (r==true)
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+
+    </script>
+   
+
+ </body>
