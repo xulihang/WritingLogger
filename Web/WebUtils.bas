@@ -41,3 +41,7 @@ End Sub
 Public Sub RedirectTo(ws As WebSocket, TargetUrl As String)
 	ws.Eval("window.location = arguments[0]", Array As Object(TargetUrl))
 End Sub
+
+Public Sub PopUpWindows(ws As WebSocket, TargetUrl As String)
+	ws.Eval("window.open("&TargetUrl&")",Null)
+End Sub

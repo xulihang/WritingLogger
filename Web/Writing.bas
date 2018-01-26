@@ -6,7 +6,7 @@ B4J=true
 'WebSocket class
 Sub Class_Globals
 	Private ws As WebSocket
-	Private username,userlist,textarea As JQueryElement
+	Private username,userlist,textarea,taskbar,login,downrecord As JQueryElement
 	Private loginedUsername="" As String
 	Private previousTimestamp=0 As Long
 	Private old="" As String
@@ -46,32 +46,25 @@ Sub Enter_Click (Params As Map)
 		Log(File.Exists(File.DirApp,"www/tmp/"&name&".txt"))
 		If File.Exists(File.DirApp,"www/tmp/"&name&".txt") Then
 			Dim confirm As Future
-			confirm=ws.RunFunctionWithResult("show_confirm",Array as Object("检测到此前保存的记录，是否使用？"))
+			confirm=ws.RunFunctionWithResult("show_confirm",Array As Object("检测到此前保存的记录，是否使用？"))
 			Dim result As String=confirm.Value
 			If result="true" Then
 				loadRecord(name)
 			End If
 		End If
 		loginedUsername=name
+		ws.Session.SetAttribute("username",loginedUsername)
+		login.SetHtml("<p>"&name&"已登录</p>")
+		downrecord.SetProp("href","/downloadrecord/"&name)
+		taskbar.SetCSS("display","inherit")
 		CallSubDelayed3(UsersShared,"addConnection",Me,name)
 	End If
 End Sub
 
 Sub Logout_Click (Params As Map)
-	Dim nf As Future = username.GetVal
-	Dim name As String = nf.Value
-	name = WebUtils.EscapeHtml(name.Trim)
-    Log(name)
-	CallSubDelayed3(UsersShared,"removeConnection",Me,name)
-End Sub
-
-Sub Download_Click (Params As Map)
 	save_Record(False)
-	WebUtils.RedirectTo(ws,"/records")
-	ws.Alert("请根据文件名找到并下载您的文件")
-	ws.Flush
+	CallSubDelayed3(UsersShared,"removeConnection",Me,loginedUsername)
 End Sub
-
 
 Sub addUser(name As String)
 	Log("ddd")
@@ -90,10 +83,18 @@ Sub loadRecord(name As String)
 	previousTimestamp=lastmap.Get("timestamp")
 End Sub
 
-Sub Logout(name As String)
-	Log("ddd2")
+Sub UsersExited(name As String)
 	ws.Eval("$('span').remove('#"&name&"')",Null)
 	ws.Flush
+End Sub
+
+Sub Logout(name As String)
+	ws.Eval("$('span').remove('#"&name&"')",Null)
+	login.SetText("未连接")
+	taskbar.SetHtml("<a href="&Chr(34)&"/analyser.html"&Chr(34)&">分析记录</a>")
+	ws.Alert("您已登出")
+	ws.Flush
+	ws.Close
 End Sub
 
 Sub upload_Text(params As Map)
@@ -144,7 +145,7 @@ Sub upload_Text(params As Map)
 	save_Record(True)
 End Sub
 
-Sub save_Record(istmp As Boolean)
+Sub save_Record(istmp As Boolean) As String
 	Dim json As JSONGenerator
 	json.Initialize2(logList)
 	DateTime.DateFormat="yyyy-MM-dd"
@@ -159,7 +160,7 @@ Sub save_Record(istmp As Boolean)
 	Log(filename)
 	File.WriteString(File.DirApp,filename&".json",json.ToPrettyString(4))
 	File.WriteString(File.DirApp,filename&".txt",old)
-	ws.RunFunction("Saved",Null)
+	Return filename
 End Sub
 
 Sub saveToCSV(filename As String)

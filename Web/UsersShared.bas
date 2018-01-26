@@ -27,8 +27,9 @@ End Sub
 
 Public Sub removeConnection(w As Writing, name As String)
 	If connections.ContainsKey(name) = False Or connections.Get(name) <> w Then Return
+	CallSubDelayed2(w,"Logout",name)
 	For Each w As Writing In connections.Values
-		CallSubDelayed2(w,"Logout",name)
+		CallSubDelayed2(w,"UsersExited",name)
 	Next
 	connections.Remove(name)
 	Log(name&" exited")

@@ -1,16 +1,20 @@
 ﻿Version=5.9
 AppType=StandardJava
-NumberOfModules=3
+NumberOfModules=6
 Module1=Writing
 Module2=UsersShared
 Module3=WebUtils
+Module4=downloadrecord
+Module5=analyser
+Module6=FileUpload
 Build1=Default,b4j.example
 NumberOfFiles=0
-NumberOfLibraries=4
+NumberOfLibraries=5
 Library1=jcore
 Library2=jserver
 Library3=json
 Library4=apachestringutilsb4j
+Library5=archiver
 @EndOfDesignText@
 'Non-UI application (console / server application)
 #Region Project Attributes 
@@ -25,7 +29,10 @@ End Sub
 Sub AppStart (Args() As String)
 	srvr.Initialize("srvr")
 	srvr.Port = 51042
+	srvr.AddHandler("/downloadrecord/*", "downloadrecord",False)
 	srvr.AddWebSocket("/main", "Writing")
+	srvr.AddWebSocket("/analyser", "analyser")
+	srvr.AddHandler("/fileupload","fileupload",False)
 	UsersShared.Init
 	srvr.Start
 	StartMessageLoop
