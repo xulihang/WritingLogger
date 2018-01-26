@@ -18,6 +18,14 @@ textarea:focus {
     margin: 5px 1px 3px 0px;
 }
 
+#taskbar {
+    display:none;
+}
+
+#downloadrecord {
+    display:none;
+}
+
 #text_div {
     width:81%;
     position: absolute;
@@ -25,9 +33,11 @@ textarea:focus {
 
 #word-count {
     left:82%;
-    top:10%;
+    top:70px;
+    display:inline;
     position:absolute;
 }
+
 #userlist {
     left:82%;
     width:13%;

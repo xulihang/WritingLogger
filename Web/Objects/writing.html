@@ -9,23 +9,27 @@
     <script src="/b4j_ws.js"></script>
  </head>
  <body>
-	<h1>Login</h1>
-	<div>
+	<h1>写作记录器</h1>
+	<div id="login">
         <form>
-        Input your user name: <input id="username" type="text"></input>
-        <button type="submit" id="enter">Enter</button>
+        输入用户名： <input id="username" type="text"></input>
+        <button type="submit" id="enter">登录</button>
         </form>
      </div>
-      <button id="logout">Logout</button>
-      <button id="download">下载记录</button>
+     <div id="taskbar">
+      <button id="logout">完成记录并登出</button>
+      <a id="downrecord">下载记录</a>
+      <div id="word-count"><p id="length">词数：</p></div>
+      </div>
+      
      <div id="text_div">
          <textarea id="textarea" oninput="OnInput(event)"></textarea>
         <br/>
      </div>
+     
      <div id="userlist">
      <p>已登录用户：</p>
      </div>
-     <div id="word-count"><p id="length">词数：</p></div>
 	<script>
     var ev;
 	$( document ).ready(function() {
@@ -34,6 +38,7 @@
     function OnInput (event) {
             ev=event;
             $('#length').text("词数："+event.target.value.split(" ").length);
+            console.log(event.target.value)
             b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {text: event.target.value,position:textarea.selectionStart}}));
         }
     function show_confirm(text)
@@ -48,8 +53,6 @@
       return false;
       }
     }
-
-
     </script>
    
 

@@ -1,8 +1,8 @@
 ﻿Version=5.9
 AppType=StandardJava
 NumberOfModules=3
-Module1=UsersShared
-Module2=Writing
+Module1=Writing
+Module2=UsersShared
 Module3=WebUtils
 Build1=Default,b4j.example
 NumberOfFiles=0
