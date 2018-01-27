@@ -66,7 +66,7 @@ Sub Logout_Click (Params As Map)
 	CallSubDelayed3(UsersShared,"removeConnection",Me,loginedUsername)
 End Sub
 
-Sub addUser(name As String)
+Sub addUser(name As String) '更新已登录用户列表
 	Log("ddd")
 	userlist.RunMethod("append",Array As Object("<span id="&Chr(34)&name&Chr(34)&">"&name&"</span>"))
 	ws.Flush
@@ -75,7 +75,7 @@ End Sub
 Sub loadRecord(name As String)
 	Dim old As String
 	old=File.ReadString(File.DirApp,"www/tmp/"&name&".txt")
-	ws.Eval("old=arguments[0]",Array As Object(old))
+	ws.Eval("old=arguments[0]",Array As Object(old)) '需要给客户端也重新加载
 	ws.Flush
 	textarea.SetVal(old)
 	Dim json As JSONParser
