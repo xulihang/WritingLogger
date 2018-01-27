@@ -9,7 +9,7 @@
     <script src="/b4j_ws.js"></script>
  </head>
  <body>
-	<h1>写作记录器</h1>
+	<h1>写作记录器-中文写作版</h1>
 	<div id="login">
         <form>
         输入用户名： <input id="username" type="text"></input>
@@ -39,8 +39,7 @@
     function OnInput (event) {
             var newText=event.target.value;
             var position=textarea.selectionStart;
-            var type;
-            $('#length').text("词数："+event.target.value.split(" ").length);
+            $('#length').text("词数："+newText.split(" ").length);
             var word;
             if (newText.length>old.length){
                 word=newText.substring(position-newText.length+old.length,position)
@@ -49,8 +48,20 @@
                 word=old.substring(position,position+old.length-newText.length)
                 type="revision";
             }
-            b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {word: word,pos:position,type:type}}));
-            old=event.target.value;
+            if (escape(word).indexOf( "%u" )<0)
+            {
+                if (word==="\n"){
+                    b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {word: word,pos:position,type:type}}));
+                    old=event.target.value;
+                }
+                // 没有包含中文
+            } else {
+                // 包含中文
+                b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {word: word,pos:position,type:type}}));
+                old=event.target.value;
+            }
+            
+
         }
     function show_confirm(text)
     {

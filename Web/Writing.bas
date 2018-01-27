@@ -9,7 +9,7 @@ Sub Class_Globals
 	Private username,userlist,textarea,taskbar,login,downrecord As JQueryElement
 	Private loginedUsername="" As String
 	Private previousTimestamp=0 As Long
-	Private old="" As String
+	'Private old="" As String
 	Private logList As List
 End Sub
 
@@ -73,7 +73,10 @@ Sub addUser(name As String)
 End Sub
 
 Sub loadRecord(name As String)
+	Dim old As String
 	old=File.ReadString(File.DirApp,"www/tmp/"&name&".txt")
+	ws.Eval("old=arguments[0]",Array As Object(old))
+	ws.Flush
 	textarea.SetVal(old)
 	Dim json As JSONParser
 	json.Initialize(File.ReadString(File.DirApp,"www/tmp/"&name&".json"))
@@ -106,42 +109,15 @@ Sub upload_Text(params As Map)
 	If logList.Size=0 Then
 		previousTimestamp=DateTime.Now
 	End If
-    Dim new As String
-	Dim position As Int
-	new=params.Get("text")
-	position=params.Get("position")
-	Dim map1 As Map
-	map1.Initialize
-	If new.Length>old.Length Then
-        map1.Put("word",new.SubString2(position-new.Length+old.Length,position))
-		map1.Put("type","new")
-        map1.Put("pos",position)
-		Dim time As Long
-		time=DateTime.Now
-		Log(time)
-		Log(previousTimestamp)
-		map1.Put("timestamp",time)
-		map1.Put("duration",time-previousTimestamp)
-		previousTimestamp=time
-		logList.Add(map1)
-		Log(map1)
-		old=new
-	Else if new.Length<old.Length Then
-		Log(position)
-		Log(old.Length)
-		Log(new.Length)
-		map1.Put("word",old.SubString2(position,position+old.Length-new.Length))
-		map1.Put("type","revision")
-		map1.Put("pos",position)
-		Dim time As Long
-		time=DateTime.Now
-		map1.Put("timestamp",time)
-		map1.Put("duration",time-previousTimestamp)
-		previousTimestamp=time
-		logList.Add(map1)
-		Log(map1)
-		old=new
-	End If
+	Dim time As Long
+	time=DateTime.Now
+	Log(time)
+	Log(previousTimestamp)
+	params.Put("timestamp",time)
+	params.Put("duration",time-previousTimestamp)
+	previousTimestamp=time
+	logList.Add(params)
+	Log(params)
 	save_Record(True)
 End Sub
 
@@ -159,6 +135,10 @@ Sub save_Record(istmp As Boolean) As String
 	End If
 	Log(filename)
 	File.WriteString(File.DirApp,filename&".json",json.ToPrettyString(4))
+	Dim tf As Future
+	tf=textarea.GetVal
+	Dim old As String
+	old=tf.Value
 	File.WriteString(File.DirApp,filename&".txt",old)
 	Return filename
 End Sub
