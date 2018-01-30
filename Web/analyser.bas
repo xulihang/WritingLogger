@@ -95,11 +95,26 @@ Sub showsummary_Click(Params As Map)
 	sb.Initialize
 	sb.Append("<p>过程记录：</p><table>")
 	sb.Append("<tr>")
-	For Each head As String In Array As String("ID","Word","Position","Type","InputedTime","Duration","DocLength","WhichPara","RevisionType","DeleteByPressing")
+	For Each head As String In Array As String("ID","Word","Position","Type","StartTime","EndTime","Duration","ActionTime","Pause","DocLength","WhichPara","RevisionType","DeleteByPressing")
 		sb.Append("<th>"&head&"</th>")
 	Next
 	sb.Append("</tr>")
 	For Each item As Map In loglist
+		
+		Dim keyloglist As List
+		keyloglist=item.Get("keylog")
+		Dim firstKeylog As Map
+		firstKeylog=keyloglist.Get(0)
+		Dim startTime,duration,endTime,actionTime,pause As Long
+		startTime=firstKeylog.Get("time")
+		duration=item.Get("duration")
+		endTime=item.Get("timestamp")
+		actionTime=endTime-startTime
+		If duration>actionTime Then
+		    pause=duration-actionTime
+		Else
+			pause=duration
+		End If
 		Dim revisionType,DeleteByPressing As String
 		If item.Get("type")="revision" Then
 			If item.Get("pos")-previousPos>1 Or item.Get("pos")-previousPos<-1 Then
@@ -123,9 +138,10 @@ Sub showsummary_Click(Params As Map)
 				Log(LastException)
 			End Try
 		End If
+		
 		Dim fullDoc As String=getFullDoc(id) '获得该时间点的文本
 		sb.Append("<tr>")
-		For Each col As String In Array As String(id,item.Get("word"),item.Get("pos"),item.Get("type"),item.Get("timestamp"),item.Get("duration"),fullDoc.Length,getWhichParaBelongsTo(id),revisionType,DeleteByPressing)
+		For Each col As String In Array As String(id,item.Get("word"),item.Get("pos"),item.Get("type"),startTime,endTime,duration,actionTime,pause,fullDoc.Length,getWhichParaBelongsTo(id),revisionType,DeleteByPressing)
 			sb.Append("<th>"&col&"</th>")
 		Next
 		sb.Append("</tr>")
