@@ -61,7 +61,7 @@ Sub replayRecord
 		word=item.Get("word")
 		Dim pos As Int
 		pos=item.Get("pos")
-		If item.Get("type")="new" Then
+		If item.Get("type")="new" Or item.Get("type")="revision_new" Then
 			Sleep(item.Get("duration")) '回放的时候反映停顿时间
 			pos=pos-word.Length
 			before=text.SubString2(0,pos)
@@ -95,12 +95,24 @@ Sub showsummary_Click(Params As Map)
 	sb.Initialize
 	sb.Append("<p>过程记录：</p><table>")
 	sb.Append("<tr>")
-	For Each head As String In Array As String("ID","Word","Position","Type","StartTime","EndTime","Duration","ActionTime","Pause","DocLength","WhichPara","RevisionType","DeleteByPressing")
+	For Each head As String In Array As String("ID","Word","Position","Type","StartTime","EndTime","Duration","ActionTime","Pause","PauseLocation","DocLength","WhichPara","RevisionType","DeleteByPressing")
 		sb.Append("<th>"&head&"</th>")
 	Next
 	sb.Append("</tr>")
 	For Each item As Map In loglist
 		
+		Dim fullDoc As String=getFullDoc(id) '获得该时间点的文本
+		Try
+			Dim fullDocPlusOne As String=getFullDoc(id+1)
+			If fullDocPlusOne.Length<fullDoc.Length Then '说明此后一步是删除
+				fullDocPlusOne=fullDoc
+			End If
+		Catch
+			Log(LastException)
+			fullDocPlusOne=fullDoc
+		End Try
+		
+		'以下一段分析各种时间
 		Dim keyloglist As List
 		keyloglist=item.Get("keylog")
 		Dim firstKeylog As Map
@@ -115,15 +127,19 @@ Sub showsummary_Click(Params As Map)
 		Else
 			pause=duration
 		End If
+		
+		'分析修改类型
 		Dim revisionType,DeleteByPressing As String
-		If item.Get("type")="revision" Then
+		If item.Get("type")="revision_del" Or item.Get("type")="revision_new" Then
 			If item.Get("pos")-previousPos>1 Or item.Get("pos")-previousPos<-1 Then
 				revisionType="Long distance"
 			Else
 				revisionType="Nearby"
 			End If
-
-			If item.Get("pos")=previousPos Then
+        End If
+		
+		If item.Get("type")="revision_del" Then
+		    If item.Get("pos")=previousPos Then
 				DeleteByPressing="delete"
 			Else
 				DeleteByPressing="backspace"
@@ -139,9 +155,67 @@ Sub showsummary_Click(Params As Map)
 			End Try
 		End If
 		
-		Dim fullDoc As String=getFullDoc(id) '获得该时间点的文本
+		'分析停顿位置，这里的代码比较复杂
+		Dim pauselocation As String
+		Dim pos As Int
+		pos=item.Get("pos")
+		Dim left,right As String
+		If item.Get("type")="new" Or item.Get("type")="revision_new" Then
+			If pos-2<0 Then
+				left="不存在"
+			Else
+				left=fullDocPlusOne.CharAt(pos-2)
+			End If
+			If pos=fullDocPlusOne.Length Then
+				right="不存在"
+			Else
+				Log(fullDocPlusOne.Length)
+				Log(pos)
+				If fullDocPlusOne.Length<pos Then
+					right="不存在"
+				Else
+					right=fullDocPlusOne.CharAt(pos)
+				End If
+				
+			End If
+			Log("left: "&left)
+			Log("right: "&right)
+			Dim su As ApacheSU
+			If item.Get("word")=CRLF Then
+				pauselocation="BEFORE PARAGRAPHS"
+			else if right=CRLF Then
+				pauselocation="AFTER PARAGRAPHS"
+			else If isPunctuation(left) Or left="不存在" Or left=CRLF Then '. M
+				pauselocation="BEFORE SENTENCES"
+			else if su.IsAlphanumeric(left) And isPunctuation(item.Get("word")) Then 'you. I
+				pauselocation="AFTER SENTENCES"
+			else if su.IsAlphanumeric(left) And item.Get("word")<>" " And item.Get("word")<>"," Then 'Middle
+				pauselocation="WITHIN WORDS"
+			else if left="'" And item.Get("word")<>" " And item.Get("word")<>"," Then 'Middle
+				pauselocation="WITHIN WORDS"
+			else if item.Get("word")=" " Or item.Get("word")="," Then 'love you
+				If su.IsAlphanumeric(left) Or left="," Then
+					pauselocation="AFTER WORDS"
+				End If
+			else if left=" " And su.IsAlphanumeric(right) Then 'love you
+				pauselocation="BEFORE WORDS"
+			else if left=" " And right=" " Then ' I 
+				pauselocation="BEFORE WORDS"
+			End If
+			'pauselocation=left&pauselocation&right.Replace(CRLF,"Enter").Replace(" ","Space")
+			Log(pauselocation)
+		Else
+			pauselocation="REVISION_DEL"
+		End If
+
+		'生成表格
+		
 		sb.Append("<tr>")
-		For Each col As String In Array As String(id,item.Get("word"),item.Get("pos"),item.Get("type"),startTime,endTime,duration,actionTime,pause,fullDoc.Length,getWhichParaBelongsTo(id),revisionType,DeleteByPressing)
+		Dim word As String
+		word=item.Get("word")
+		word=word.Replace(CRLF,"Enter")
+		word=word.Replace(" ","Space")
+		For Each col As String In Array As String(id,word,item.Get("pos"),item.Get("type"),startTime,endTime,duration,actionTime,pause,pauselocation,fullDoc.Length,getWhichParaBelongsTo(id),revisionType,DeleteByPressing)
 			sb.Append("<th>"&col&"</th>")
 		Next
 		sb.Append("</tr>")
@@ -259,7 +333,7 @@ Sub getFullDoc(id As Int) As String
 		word=item.Get("word")
 		Dim pos As Int
 		pos=item.Get("pos")
-		If item.Get("type")="new" Then
+		If item.Get("type")="new" Or item.Get("type")="revision_new" Then
 			pos=pos-word.Length
 			before=text.SubString2(0,pos)
 			after=text.SubString2(pos,text.Length)
@@ -273,4 +347,13 @@ Sub getFullDoc(id As Int) As String
 		currentPos=currentPos+1
 	Next
 	Return text
+End Sub
+
+Sub isPunctuation(mark As String) As Boolean
+	Select mark
+		Case ".","!","?",";"
+			Return True
+		Case Else
+			Return False
+	End Select
 End Sub
