@@ -43,15 +43,23 @@
     function OnInput (event) {
             var newText=event.target.value;
             var position=textarea.selectionStart;
+            var type;
             $('#length').text("词数："+newText.split(" ").length);
             var word;
             if (newText.length>old.length){
                 word=newText.substring(position-newText.length+old.length,position)
-                type="new";
+                console.log(position)
+                console.log(textarea.value.length)
+                if (position!=textarea.value.length){
+                    type="revision_new";
+                }else{
+                    type="new";
+                }
             }else{
                 word=old.substring(position,position+old.length-newText.length)
-                type="revision";
+                type="revision_del";
             }
+            console.log(word)
             if (escape(word).indexOf( "%u" )<0)
             {
                 if (word==="\n"){

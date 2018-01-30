@@ -187,17 +187,17 @@ Sub showsummary_Click(Params As Map)
 				pauselocation="AFTER PARAGRAPHS"
 			else If isPunctuation(left) Or left="不存在" Or left=CRLF Then '. M
 				pauselocation="BEFORE SENTENCES"
-			else if su.IsAlphanumeric(left) And isPunctuation(item.Get("word")) Then 'you. I
+			else if IsContent(left) And isPunctuation(item.Get("word")) Then 'you. I
 				pauselocation="AFTER SENTENCES"
-			else if su.IsAlphanumeric(left) And item.Get("word")<>" " And item.Get("word")<>"," Then 'Middle
+			else if IsContent(left) And item.Get("word")<>" " And item.Get("word")<>"," Then 'Middle
 				pauselocation="WITHIN WORDS"
 			else if left="'" And item.Get("word")<>" " And item.Get("word")<>"," Then 'Middle
 				pauselocation="WITHIN WORDS"
 			else if item.Get("word")=" " Or item.Get("word")="," Then 'love you
-				If su.IsAlphanumeric(left) Or left="," Then
+				If IsContent(left) Or left="," Then
 					pauselocation="AFTER WORDS"
 				End If
-			else if left=" " And su.IsAlphanumeric(right) Then 'love you
+			else if left=" " And IsContent(right) Then 'love you
 				pauselocation="BEFORE WORDS"
 			else if left=" " And right=" " Then ' I 
 				pauselocation="BEFORE WORDS"
@@ -356,4 +356,13 @@ Sub isPunctuation(mark As String) As Boolean
 		Case Else
 			Return False
 	End Select
+End Sub
+
+Sub IsContent(txt As String) As Boolean
+	Dim su As ApacheSU
+	If su.IsEmpty(txt)=False And isPunctuation(txt)=False And txt<>" " And txt<>CRLF Then
+		Return True
+	Else
+		Return False
+	End If
 End Sub

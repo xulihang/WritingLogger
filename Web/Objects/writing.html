@@ -31,27 +31,61 @@
      <p>已登录用户：</p>
      </div>
 	<script>
-    var old;
-    old="";
+    var old="";
+    
 	$( document ).ready(function() {
         b4j_connect("/main");
     });
+    
+    $("textarea").keydown(function(event) {
+            console.log("down")
+            b4j_ws.send(JSON.stringify({type: "event", event: "key_down", params: {key:event.key}}));
+	        })
+            
+    $("textarea").keypress(function(event) {
+            console.log("press");
+            //b4j_ws.send(JSON.stringify({type: "event", event: "key_press", params: {key:event.key}}));
+	        })
+            
     function OnInput (event) {
-            var newText=event.target.value;
+            console.log("input")
+            upload();
+        }
+
+    function upload(){
+            var newText=textarea.value;
             var position=textarea.selectionStart;
             var type;
-            $('#length').text("词数："+event.target.value.split(" ").length);
+            var eventname="up_load";
             var word;
+            $('#length').text("词数："+textarea.value.split(" ").length);
+
             if (newText.length>old.length){
                 word=newText.substring(position-newText.length+old.length,position)
-                type="new";
-            }else{
+                if (position!=textarea.value.length){
+                    type="revision_new";
+                }else{
+                    type="new";
+                }
+                
+            }else if (newText.length<old.length){
                 word=old.substring(position,position+old.length-newText.length)
-                type="revision";
+                type="revision_del";
+            }else{
+                return
             }
-            b4j_ws.send(JSON.stringify({type: "event", event: "upload_Text", params: {word: word,pos:position,type:type}}));
-            old=event.target.value;
-        }
+            var params={};
+            params["word"]=word;
+            params["pos"]=position;
+            params["type"]=type;
+            b4j_ws.send(JSON.stringify({type: "event", event: eventname, params: params}));
+            old=textarea.value;
+    }
+    
+    //禁用鼠标右键，以免复制粘贴有干扰
+    document.oncontextmenu = function(){
+        return false;
+    }
     function show_confirm(text)
     {
     var r=confirm(text);
