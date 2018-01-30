@@ -11,11 +11,15 @@ Sub Class_Globals
 	Private previousTimestamp=0 As Long
 	'Private old="" As String
 	Private logList As List
+	Private keyLogList As List
 End Sub
 
 Public Sub Initialize
 	If logList.IsInitialized=False Then
 		logList.Initialize
+	End If
+	If keyLogList.IsInitialized=False Then
+		keyLogList.Initialize
 	End If
 End Sub
 
@@ -67,7 +71,6 @@ Sub Logout_Click (Params As Map)
 End Sub
 
 Sub addUser(name As String) '更新已登录用户列表
-	Log("ddd")
 	userlist.RunMethod("append",Array As Object("<span id="&Chr(34)&name&Chr(34)&">"&name&"</span>"))
 	ws.Flush
 End Sub
@@ -100,30 +103,62 @@ Sub Logout(name As String)
 	ws.Close
 End Sub
 
-Sub upload_Text(params As Map)
-	If loginedUsername="" Then
-		ws.Alert("请先登录！")
-		ws.Flush
-		Return
-	End If
+Sub onchange(params As Map) '用于响应oninput事件
 	If logList.Size=0 Then
 		previousTimestamp=DateTime.Now
 	End If
 	Dim time As Long
 	time=DateTime.Now
-	Log(time)
-	Log(previousTimestamp)
+	Dim list1 As List
+	list1.Initialize
+	list1.AddAll(keyLogList)
+	'list1=keyLogList 不能用这行代码，会变成实参
 	params.Put("timestamp",time)
 	params.Put("duration",time-previousTimestamp)
+	params.Put("keylog",list1)
 	previousTimestamp=time
 	logList.Add(params)
 	Log(params)
 	save_Record(True)
+	keyLogList.Clear
+End Sub
+
+Sub up_load(params As Map)
+	If loginedUsername="" Then
+		ws.Alert("请先登录！")
+		ws.Flush
+		Return
+	End If
+	onchange(params)
+	Log("oninput")
+End Sub
+
+Sub key_down(params As Map)
+    Log("key_down")
+    Dim map1 As Map
+	map1.Initialize
+    map1.Put("key",params.Get("key"))
+	map1.Put("time",DateTime.Now)
+	map1.Put("type","keydown")
+    keyLogList.Add(map1)
+	Log(keyLogList)
+End Sub
+
+Sub key_press(params As Map)
+	Log("key_press"&DateTime.Now)
+	Dim map1 As Map
+	map1.Initialize
+	map1.Put("key",params.Get("key"))
+	map1.Put("time",DateTime.Now)
+	map1.Put("type","keypress")
+	keyLogList.Add(map1)
+	Log(keyLogList)
 End Sub
 
 Sub save_Record(istmp As Boolean) As String
 	Dim json As JSONGenerator
 	json.Initialize2(logList)
+	
 	DateTime.DateFormat="yyyy-MM-dd"
 	DateTime.TimeFormat="-HH-mm-ss"
 	Dim filename As String
