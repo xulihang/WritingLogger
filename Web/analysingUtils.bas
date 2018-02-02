@@ -204,6 +204,27 @@ Sub getWhichParaBelongsTo(id As Int,loglist As List) As Int
 	Next
 End Sub
 
+Sub getWhichParaNowBelongsTo(id As Int,loglist As List) As Int
+	Dim item As Map
+	item=loglist.Get(id-1)
+	Dim fullText As String
+	fullText=getFullDoc(loglist.Size-1,loglist)
+	Dim paras As List
+	Dim su As ApacheSU
+	paras=su.SplitWithSeparator(fullText,CRLF)
+	For i=0 To paras.Size-1
+		Dim paraCombined As String
+		For j=0 To i
+			paraCombined=paraCombined&CRLF&paras.Get(j)
+		Next
+		Log(item.Get("pos"))
+		Log(paraCombined)
+		If item.Get("pos")<paraCombined.Length Then
+			Return i+1
+		End If
+	Next
+End Sub
+
 Sub isPunctuation(mark As String) As Boolean
 	Select mark
 		Case ".","!","?",";"
