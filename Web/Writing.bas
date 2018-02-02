@@ -179,6 +179,26 @@ Sub save_Record(istmp As Boolean) As String
 End Sub
 
 Sub saveToCSV(filename As String)
+	Dim au As analysingUtils
+	au.Initialize
+	Dim resultList As List
+	resultList=au.summaryList(logList)
+	Dim csv As String
+	For Each itemList As List In resultList
+		Dim line As String
+		For Each item As String In itemList
+			If line="" Then
+				line=item
+			Else
+				line=line&"	"&item
+		    End If
+		Next
+		csv=csv&line&CRLF
+	Next
+	File.WriteString(File.DirApp,filename&".csv",csv)
+End Sub
+
+Sub saveToCSVOld(filename As String)
 	Dim csv As String
 	For Each item As Map In logList
 		For Each key As String In item.Keys

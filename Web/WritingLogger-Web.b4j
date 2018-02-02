@@ -1,12 +1,14 @@
 ﻿Version=5.9
 AppType=StandardJava
-NumberOfModules=6
+NumberOfModules=8
 Module1=Writing
 Module2=UsersShared
 Module3=WebUtils
 Module4=downloadrecord
 Module5=analyser
 Module6=FileUpload
+Module7=getcsv
+Module8=analysingUtils
 Build1=Default,b4j.example
 NumberOfFiles=0
 NumberOfLibraries=5
@@ -33,6 +35,7 @@ Sub AppStart (Args() As String)
 	srvr.AddWebSocket("/main", "Writing")
 	srvr.AddWebSocket("/analyser", "analyser")
 	srvr.AddHandler("/fileupload","fileupload",False)
+	srvr.AddHandler("/getcsv","getcsv",False)
 	UsersShared.Init
 	srvr.Start
 	StartMessageLoop

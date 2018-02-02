@@ -180,7 +180,7 @@ Sub showsummary_Click(Params As Map)
 			End If
 			Log("left: "&left)
 			Log("right: "&right)
-			Dim su As ApacheSU
+
 			If item.Get("word")=CRLF Then
 				pauselocation="BEFORE PARAGRAPHS"
 			else if right=CRLF Then
